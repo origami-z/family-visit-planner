@@ -11,11 +11,15 @@ import { Trip } from '@/types/planner';
 export function CalendarView() {
   const { state } = useFamilyPlanner();
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [yearViewStartDate, setYearViewStartDate] = useState(new Date());
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingTrip, setEditingTrip] = useState<Trip | null>(null);
 
   const handlePrevMonth = () => setCurrentDate(subMonths(currentDate, 1));
   const handleNextMonth = () => setCurrentDate(addMonths(currentDate, 1));
+  
+  const handleYearViewPrevMonth = () => setYearViewStartDate(subMonths(yearViewStartDate, 1));
+  const handleYearViewNextMonth = () => setYearViewStartDate(addMonths(yearViewStartDate, 1));
 
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
@@ -118,9 +122,27 @@ export function CalendarView() {
         </TabsContent>
 
         <TabsContent value="year" className="mt-6">
+          <Card className="mb-4">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle>
+                  {format(yearViewStartDate, 'MMMM yyyy')} - {format(addMonths(yearViewStartDate, 11), 'MMMM yyyy')}
+                </CardTitle>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="icon-sm" onClick={handleYearViewPrevMonth}>
+                    <IconChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <Button variant="outline" size="icon-sm" onClick={handleYearViewNextMonth}>
+                    <IconChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
+          </Card>
+          
           <div className="grid gap-4 md:grid-cols-3">
             {Array.from({ length: 12 }).map((_, monthIdx) => {
-              const monthDate = new Date(currentDate.getFullYear(), monthIdx, 1);
+              const monthDate = addMonths(yearViewStartDate, monthIdx);
               const start = startOfMonth(monthDate);
               const end = endOfMonth(monthDate);
               const days = eachDayOfInterval({ start, end });
