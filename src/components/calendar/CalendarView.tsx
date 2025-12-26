@@ -171,17 +171,22 @@ export function CalendarView() {
                         return (
                           <div
                             key={day.toISOString()}
-                            className="aspect-square flex items-center justify-center text-xs rounded relative"
-                            style={{
-                              background: colors.length > 0 
-                                ? colors.length === 1 
-                                  ? colors[0]
-                                  : `linear-gradient(135deg, ${colors.join(', ')})`
-                                : 'transparent',
-                              color: colors.length > 0 ? 'white' : 'inherit'
-                            }}
+                            className="aspect-square flex items-center justify-center text-xs rounded relative overflow-hidden"
                           >
-                            {format(day, 'd')}
+                            {colors.length > 0 && (
+                              <div className="absolute inset-0 flex">
+                                {colors.map((color, idx) => (
+                                  <div
+                                    key={idx}
+                                    className="flex-1"
+                                    style={{ backgroundColor: color as string }}
+                                  />
+                                ))}
+                              </div>
+                            )}
+                            <span className={`relative z-10 font-medium ${colors.length > 0 ? 'text-white' : 'text-foreground'}`}>
+                              {format(day, 'd')}
+                            </span>
                           </div>
                         );
                       })}
