@@ -19,7 +19,7 @@ function App() {
     const dataParam = urlParams.get('data')
     if (dataParam) {
       try {
-        const decoded = JSON.parse(atob(dataParam))
+        const decoded = JSON.parse(decodeURI(dataParam))
         localStorage.setItem('family-planner-data', JSON.stringify(decoded))
         window.location.href = '/'
       } catch (error) {

@@ -102,7 +102,8 @@ export function SettingsView() {
 
   const handleShareURL = () => {
     const data = exportData()
-    const encoded = btoa(JSON.stringify(data))
+    console.log('data', data)
+    const encoded = encodeURIComponent(JSON.stringify(data))
     const url = `${window.location.origin}?data=${encoded}`
 
     navigator.clipboard.writeText(url).then(() => {
