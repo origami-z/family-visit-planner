@@ -1,21 +1,21 @@
-import { useState, useEffect } from 'react';
-import { useFamilyPlanner } from '@/context/FamilyPlannerContext';
+import { useEffect, useState } from 'react'
+import type { FamilyMember } from '@/types/planner'
+import { useFamilyPlanner } from '@/context/FamilyPlannerContext'
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { FamilyMember } from '@/types/planner';
+} from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 
 interface MemberDialogProps {
-  open: boolean;
-  onClose: () => void;
-  member?: FamilyMember | null;
+  open: boolean
+  onClose: () => void
+  member?: FamilyMember | null
 }
 
 const PRESET_COLORS = [
@@ -25,45 +25,47 @@ const PRESET_COLORS = [
   '#F97316', // Orange
   '#3B82F6', // Blue
   '#10B981', // Green
-];
+]
 
 export function MemberDialog({ open, onClose, member }: MemberDialogProps) {
-  const { addMember, updateMember } = useFamilyPlanner();
-  const [name, setName] = useState('');
-  const [color, setColor] = useState(PRESET_COLORS[0]);
+  const { addMember, updateMember } = useFamilyPlanner()
+  const [name, setName] = useState('')
+  const [color, setColor] = useState(PRESET_COLORS[0])
 
   useEffect(() => {
     if (member) {
-      setName(member.name);
-      setColor(member.color);
+      setName(member.name)
+      setColor(member.color)
     } else {
-      setName('');
-      setColor(PRESET_COLORS[0]);
+      setName('')
+      setColor(PRESET_COLORS[0])
     }
-  }, [member, open]);
+  }, [member, open])
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!name.trim()) return;
+    e.preventDefault()
+
+    if (!name.trim()) return
 
     if (member) {
-      updateMember(member.id, { name, color });
+      updateMember(member.id, { name, color })
     } else {
-      addMember({ name, color, warnings: [] });
+      addMember({ name, color, warnings: [] })
     }
 
-    onClose();
-  };
+    onClose()
+  }
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent>
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>{member ? 'Edit Member' : 'Add New Member'}</DialogTitle>
+            <DialogTitle>
+              {member ? 'Edit Member' : 'Add New Member'}
+            </DialogTitle>
           </DialogHeader>
-          
+
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label htmlFor="name">Name</Label>
@@ -98,12 +100,10 @@ export function MemberDialog({ open, onClose, member }: MemberDialogProps) {
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>
-            <Button type="submit">
-              {member ? 'Update' : 'Add'} Member
-            </Button>
+            <Button type="submit">{member ? 'Update' : 'Add'} Member</Button>
           </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
-  );
+  )
 }

@@ -1,11 +1,13 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
+import { format } from 'date-fns'
+import type { Trip } from '@/types/planner';
 import { useFamilyPlanner } from '@/context/FamilyPlannerContext'
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -18,8 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { FamilyMember, Trip } from '@/types/planner'
-import { format } from 'date-fns'
+import { FamilyMember } from '@/types/planner'
 
 interface TripDialogProps {
   open: boolean

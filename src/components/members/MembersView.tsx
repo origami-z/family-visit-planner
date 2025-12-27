@@ -1,7 +1,15 @@
-import { useState } from 'react';
-import { useFamilyPlanner } from '@/context/FamilyPlannerContext';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState } from 'react'
+import {
+  IconDotsVertical,
+  IconPencil,
+  IconPlus,
+  IconTrash,
+} from '@tabler/icons-react'
+import { MemberDialog } from './MemberDialog'
+import type { FamilyMember } from '@/types/planner'
+import { useFamilyPlanner } from '@/context/FamilyPlannerContext'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Table,
   TableBody,
@@ -9,37 +17,38 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from '@/components/ui/table'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { IconPlus, IconDotsVertical, IconPencil, IconTrash } from '@tabler/icons-react';
-import { MemberDialog } from './MemberDialog';
-import { FamilyMember } from '@/types/planner';
+} from '@/components/ui/dropdown-menu'
 
 export function MembersView() {
-  const { state, deleteMember } = useFamilyPlanner();
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingMember, setEditingMember] = useState<FamilyMember | null>(null);
+  const { state, deleteMember } = useFamilyPlanner()
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [editingMember, setEditingMember] = useState<FamilyMember | null>(null)
 
   const handleEdit = (member: FamilyMember) => {
-    setEditingMember(member);
-    setDialogOpen(true);
-  };
+    setEditingMember(member)
+    setDialogOpen(true)
+  }
 
   const handleDelete = (id: string) => {
-    if (confirm('Are you sure you want to delete this member? All their trips will be removed.')) {
-      deleteMember(id);
+    if (
+      confirm(
+        'Are you sure you want to delete this member? All their trips will be removed.',
+      )
+    ) {
+      deleteMember(id)
     }
-  };
+  }
 
   const handleDialogClose = () => {
-    setDialogOpen(false);
-    setEditingMember(null);
-  };
+    setDialogOpen(false)
+    setEditingMember(null)
+  }
 
   return (
     <div className="p-6 space-y-6">
@@ -67,7 +76,7 @@ export function MembersView() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {state.members.map(member => (
+                {state.members.map((member) => (
                   <TableRow key={member.id}>
                     <TableCell className="font-medium">{member.name}</TableCell>
                     <TableCell>
@@ -76,11 +85,13 @@ export function MembersView() {
                           className="h-4 w-4 rounded-full border border-border"
                           style={{ backgroundColor: member.color }}
                         />
-                        <span className="text-sm text-muted-foreground">{member.color}</span>
+                        <span className="text-sm text-muted-foreground">
+                          {member.color}
+                        </span>
                       </div>
                     </TableCell>
                     <TableCell>
-                      {member.warnings.filter(w => w.enabled).length} active
+                      {member.warnings.filter((w) => w.enabled).length} active
                     </TableCell>
                     <TableCell className="text-right">
                       <DropdownMenu>
@@ -110,7 +121,9 @@ export function MembersView() {
             </Table>
           ) : (
             <div className="text-center py-12">
-              <p className="text-muted-foreground mb-4">No family members yet</p>
+              <p className="text-muted-foreground mb-4">
+                No family members yet
+              </p>
               <Button onClick={() => setDialogOpen(true)}>
                 <IconPlus className="h-4 w-4 mr-2" />
                 Add Your First Member
@@ -126,5 +139,5 @@ export function MembersView() {
         member={editingMember}
       />
     </div>
-  );
+  )
 }

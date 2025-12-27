@@ -1,19 +1,19 @@
 import { useMemo } from 'react'
 import {
-  differenceInDays,
-  parseISO,
-  isWithinInterval,
-  isBefore,
-  isAfter,
   addDays,
-  subYears,
+  differenceInDays,
   format,
+  isAfter,
+  isBefore,
   isValid,
+  isWithinInterval,
+  parseISO,
+  subYears,
 } from 'date-fns'
-import { Trip, FamilyMember, EmptyPeriod, MemberStats } from '@/types/planner'
+import type { EmptyPeriod, FamilyMember, MemberStats, Trip } from '@/types/planner'
 
 export function useStayDuration(
-  trips: Trip[],
+  trips: Array<Trip>,
   memberId: string,
   referenceDate: Date = new Date(),
 ) {
@@ -42,7 +42,7 @@ export function useStayDuration(
   }, [trips, memberId, referenceDate])
 }
 
-export function useEmptyDates(trips: Trip[], members: FamilyMember[]) {
+export function useEmptyDates(trips: Array<Trip>, members: Array<FamilyMember>) {
   return useMemo(() => {
     if (trips.length === 0 || members.length === 0) return []
 
@@ -55,7 +55,7 @@ export function useEmptyDates(trips: Trip[], members: FamilyMember[]) {
 
     if (allDates.length === 0) return []
 
-    const emptyPeriods: EmptyPeriod[] = []
+    const emptyPeriods: Array<EmptyPeriod> = []
     const minDate = allDates[0]
     const maxDate = allDates[allDates.length - 1]
 
@@ -109,11 +109,11 @@ export function useEmptyDates(trips: Trip[], members: FamilyMember[]) {
 }
 
 export function useMemberStats(
-  members: FamilyMember[],
-  trips: Trip[],
+  members: Array<FamilyMember>,
+  trips: Array<Trip>,
   yearLimit: number,
   referenceDate: string,
-): MemberStats[] {
+): Array<MemberStats> {
   const refDayParsed = parseISO(referenceDate)
   return useMemo(() => {
     const refDay = isValid(refDayParsed) ? refDayParsed : new Date()
@@ -155,7 +155,7 @@ export function useMemberStats(
         }
       })
 
-      const activeWarnings: string[] = []
+      const activeWarnings: Array<string> = []
       member.warnings
         .filter((w) => w.enabled)
         .forEach((warning) => {
