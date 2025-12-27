@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import {
   addDays,
+  addYears,
   differenceInDays,
   format,
   isAfter,
@@ -13,6 +14,7 @@ import {
 import type {
   EmptyPeriod,
   FamilyMember,
+  HighlightTrip,
   MemberStats,
   Trip,
 } from '@/types/planner'
@@ -116,74 +118,114 @@ export function useEmptyDates(
   }, [trips, members])
 }
 
+function isWithinOneYar(start: Date, end: Date, refDay: Date): boolean {
+  return (
+    isAfter(end, subYears(refDay, 1)) || isBefore(start, addYears(refDay, 1))
+  )
+}
+
 export function useMemberStats(
   members: Array<FamilyMember>,
   trips: Array<Trip>,
   yearLimit: number,
-  referenceDate: string,
 ): Array<MemberStats> {
-  const refDayParsed = parseISO(referenceDate)
   return useMemo(() => {
-    const refDay = isValid(refDayParsed) ? refDayParsed : new Date()
-    console.log('refDay', refDay)
+    const today = new Date()
 
     return members.map((member) => {
-      const memberTrips = trips
+      const memberTripsSorted = trips
         .filter((t) => t.memberId === member.id)
         .sort(
           (a, b) =>
             parseISO(a.entryDate).getTime() - parseISO(b.entryDate).getTime(),
         )
 
-      const currentTrip = memberTrips.find((trip) => {
+      const currentTrip = memberTripsSorted.find((trip) => {
         const start = parseISO(trip.entryDate)
         const end = parseISO(trip.departureDate)
-        return isWithinInterval(refDay, { start, end })
+        return isWithinInterval(today, { start, end })
       })
 
-      const futureTrips = memberTrips.filter((trip) =>
-        isAfter(parseISO(trip.entryDate), refDay),
+      const futureTrips = memberTripsSorted.filter((trip) =>
+        isAfter(parseISO(trip.entryDate), today),
       )
 
-      const oneYearAgo = subYears(refDay, 1)
-      let daysInYear = 0
+      const oneYearAgo = subYears(today, 1)
 
-      memberTrips.forEach((trip) => {
+      const highlightTrips: Array<HighlightTrip> = []
+
+      for (let i = 0; i < memberTripsSorted.length; i++) {
+        const trip = memberTripsSorted[i]
+
         const start = parseISO(trip.entryDate)
         const end = parseISO(trip.departureDate)
 
-        const overlapStart = isBefore(start, oneYearAgo) ? oneYearAgo : start
-        const overlapEnd = isAfter(end, refDay) ? refDay : end
-
-        if (
-          isBefore(overlapStart, overlapEnd) ||
-          overlapStart.getTime() === overlapEnd.getTime()
-        ) {
-          daysInYear += differenceInDays(overlapEnd, overlapStart) + 1
+        if (!isWithinOneYar(start, end, today)) {
+          continue
         }
-      })
+
+        let daysInYear = 0
+
+        const refDate = addYears(start, 1)
+
+        for (
+          let testIndex = i;
+          testIndex < memberTripsSorted.length;
+          testIndex++
+        ) {
+          const testTrip = memberTripsSorted[testIndex]
+
+          const testTripStart = parseISO(testTrip.entryDate)
+          const testTripEnd = parseISO(testTrip.departureDate)
+
+          if (isAfter(testTripStart, refDate)) {
+            // more than one year later, break early
+            break
+          }
+
+          const overlapStart = isBefore(testTripStart, refDate)
+            ? testTripStart
+            : refDate
+          const overlapEnd = isAfter(testTripEnd, refDate)
+            ? refDate
+            : testTripEnd
+
+          if (
+            isBefore(overlapStart, overlapEnd) ||
+            overlapStart.getTime() === overlapEnd.getTime()
+          ) {
+            daysInYear += differenceInDays(overlapEnd, overlapStart) + 1
+          }
+        }
+
+        highlightTrips.push({
+          trip,
+          refDate: format(refDate, 'yyyy-MM-dd'),
+          daysInYear,
+          isOverLimit: daysInYear > yearLimit,
+        })
+      }
 
       const activeWarnings: Array<string> = []
-      member.warnings
-        .filter((w) => w.enabled)
-        .forEach((warning) => {
-          if (warning.type === 'stay-limit' && warning.criteria.limit) {
-            if (daysInYear >= warning.criteria.limit) {
-              activeWarnings.push(warning.criteria.message)
-            }
-          }
-        })
+      // member.warnings
+      //   .filter((w) => w.enabled)
+      //   .forEach((warning) => {
+      //     if (warning.type === 'stay-limit' && warning.criteria.limit) {
+      //       if (daysInYear >= warning.criteria.limit) {
+      //         activeWarnings.push(warning.criteria.message)
+      //       }
+      //     }
+      //   })
 
       return {
         memberId: member.id,
         name: member.name,
         color: member.color,
         currentStatus: currentTrip ? 'present' : 'away',
-        daysInYear,
-        isOverLimit: daysInYear > yearLimit,
         nextTrip: futureTrips[0],
         activeWarnings,
+        highlightTrips,
       }
     })
-  }, [members, trips, yearLimit, refDayParsed])
+  }, [members, trips, yearLimit])
 }

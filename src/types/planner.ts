@@ -44,13 +44,20 @@ export interface EmptyPeriod {
   duration: number
 }
 
+export interface HighlightTrip {
+  trip: Trip
+  refDate: string
+  daysInYear: number
+  isOverLimit: boolean
+}
+
 export interface MemberStats {
   memberId: string
   name: string
   color: string
   currentStatus: 'present' | 'away'
-  daysInYear: number
-  isOverLimit: boolean
+  /** Trips within 1yr in the past and in the future, with over limit indication */
+  highlightTrips: Array<HighlightTrip>
   nextTrip?: Trip
   activeWarnings: Array<string>
 }
