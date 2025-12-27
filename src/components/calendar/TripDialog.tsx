@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { format } from 'date-fns'
-import type { Trip } from '@/types/planner';
+import type { Trip } from '@/types/planner'
 import { useFamilyPlanner } from '@/context/FamilyPlannerContext'
 import {
   Dialog,

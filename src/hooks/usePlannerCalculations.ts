@@ -10,7 +10,12 @@ import {
   parseISO,
   subYears,
 } from 'date-fns'
-import type { EmptyPeriod, FamilyMember, MemberStats, Trip } from '@/types/planner'
+import type {
+  EmptyPeriod,
+  FamilyMember,
+  MemberStats,
+  Trip,
+} from '@/types/planner'
 
 export function useStayDuration(
   trips: Array<Trip>,
@@ -42,7 +47,10 @@ export function useStayDuration(
   }, [trips, memberId, referenceDate])
 }
 
-export function useEmptyDates(trips: Array<Trip>, members: Array<FamilyMember>) {
+export function useEmptyDates(
+  trips: Array<Trip>,
+  members: Array<FamilyMember>,
+) {
   return useMemo(() => {
     if (trips.length === 0 || members.length === 0) return []
 
