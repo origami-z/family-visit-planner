@@ -26,7 +26,7 @@ export function useStayDuration(
 ) {
   return useMemo(() => {
     const oneYearAgo = subYears(referenceDate, 1)
-    const memberTrips = trips.filter((t) => t.memberId === memberId)
+    const memberTrips = trips.filter((t) => t.memberIds.includes(memberId))
 
     let totalDays = 0
 
@@ -134,7 +134,7 @@ export function useMemberStats(
 
     return members.map((member) => {
       const memberTripsSorted = trips
-        .filter((t) => t.memberId === member.id)
+        .filter((t) => t.memberIds.includes(member.id))
         .sort(
           (a, b) =>
             parseISO(a.entryDate).getTime() - parseISO(b.entryDate).getTime(),

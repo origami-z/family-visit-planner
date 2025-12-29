@@ -7,7 +7,7 @@ export interface FamilyMember {
 
 export interface Trip {
   id: string
-  memberId: string
+  memberIds: Array<string>
   entryDate: string
   departureDate: string
   notes?: string

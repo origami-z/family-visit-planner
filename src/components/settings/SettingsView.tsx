@@ -26,12 +26,14 @@ export function SettingsView() {
     const csvRows = ['Member,Entry Date,Departure Date,Notes']
 
     state.trips.forEach((trip) => {
-      const member = state.members.find((m) => m.id === trip.memberId)
-      if (member) {
-        csvRows.push(
-          `${member.name},${trip.entryDate},${trip.departureDate},"${trip.notes || ''}"`,
-        )
-      }
+      trip.memberIds.forEach((mid) => {
+        const member = state.members.find((m) => m.id === mid)
+        if (member) {
+          csvRows.push(
+            `${member.name},${trip.entryDate},${trip.departureDate},"${trip.notes || ''}"`,
+          )
+        }
+      })
     })
 
     const blob = new Blob([csvRows.join('\n')], { type: 'text/csv' })

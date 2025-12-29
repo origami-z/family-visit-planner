@@ -130,26 +130,28 @@ export function CalendarView() {
                         {format(day, 'd')}
                       </div>
                       <div className="space-y-1">
-                        {trips.map((trip) => {
-                          const member = state.members.find(
-                            (m) => m.id === trip.memberId,
-                          )
-                          if (!member) return null
-                          return (
-                            <div
-                              key={trip.id}
-                              className="text-xs p-1 rounded cursor-pointer hover:opacity-80"
-                              style={{
-                                backgroundColor: member.color,
-                                color: 'white',
-                              }}
-                              onClick={() => handleEditTrip(trip)}
-                              title={`${member.name}\n${trip.notes || ''}`}
-                            >
-                              {member.name}
-                            </div>
-                          )
-                        })}
+                        {trips.flatMap((trip) =>
+                          trip.memberIds.map((mid) => {
+                            const member = state.members.find(
+                              (m) => m.id === mid,
+                            )
+                            if (!member) return null
+                            return (
+                              <div
+                                key={`${trip.id}-${mid}`}
+                                className="text-xs p-1 rounded cursor-pointer hover:opacity-80"
+                                style={{
+                                  backgroundColor: member.color,
+                                  color: 'white',
+                                }}
+                                onClick={() => handleEditTrip(trip)}
+                                title={`${member.name}\n${trip.notes || ''}`}
+                              >
+                                {member.name}
+                              </div>
+                            )
+                          }),
+                        )}
                       </div>
                     </div>
                   )
@@ -219,10 +221,10 @@ export function CalendarView() {
                       {days.map((day) => {
                         const trips = getTripsForDay(day)
                         const colors = trips
+                          .flatMap((t) => t.memberIds.map((id) => id))
                           .map(
-                            (t) =>
-                              state.members.find((m) => m.id === t.memberId)
-                                ?.color,
+                            (id) =>
+                              state.members.find((m) => m.id === id)?.color,
                           )
                           .filter(Boolean)
 

@@ -38,14 +38,47 @@ const defaultState: PlannerState = {
   },
 }
 
+function storeState(state: PlannerState) {
+  if (typeof window === 'undefined') return
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+}
+
+function migrateData(oldData: any): PlannerState {
+  let migratedData = false
+
+  // Migrate Trip's memberId becomes memberIds
+  if (oldData.trips) {
+    oldData.trips = oldData.trips.map((trip: any) => {
+      if (trip.memberId && !trip.memberIds) {
+        migratedData = true
+        delete trip.memberId
+        return {
+          ...trip,
+          memberIds: [trip.memberId],
+        }
+      } else {
+        return trip
+      }
+    })
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+  if (migratedData) {
+    storeState(oldData as PlannerState)
+  }
+
+  return oldData as PlannerState
+}
+
 export function FamilyPlannerProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<PlannerState>(() => {
     if (typeof window === 'undefined') return defaultState
 
     const stored = localStorage.getItem(STORAGE_KEY)
+
     if (stored) {
       try {
-        return JSON.parse(stored)
+        return migrateData(JSON.parse(stored))
       } catch {
         return defaultState
       }
@@ -54,8 +87,7 @@ export function FamilyPlannerProvider({ children }: { children: ReactNode }) {
   })
 
   useEffect(() => {
-    if (typeof window === 'undefined') return
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+    storeState(state)
   }, [state])
 
   const addMember = (member: Omit<FamilyMember, 'id'>) => {
@@ -82,7 +114,12 @@ export function FamilyPlannerProvider({ children }: { children: ReactNode }) {
     setState((prev) => ({
       ...prev,
       members: prev.members.filter((m) => m.id !== id),
-      trips: prev.trips.filter((t) => t.memberId !== id),
+      trips: prev.trips
+        .map((t) => ({
+          ...t,
+          memberIds: t.memberIds.filter((mid) => mid !== id),
+        }))
+        .filter((t) => t.memberIds.length > 0),
     }))
   }
 

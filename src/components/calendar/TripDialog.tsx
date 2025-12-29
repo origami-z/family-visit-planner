@@ -20,7 +20,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { FamilyMember } from '@/types/planner'
 
 interface TripDialogProps {
   open: boolean
@@ -30,19 +29,19 @@ interface TripDialogProps {
 
 export function TripDialog({ open, onClose, trip }: TripDialogProps) {
   const { state, addTrip, updateTrip, deleteTrip } = useFamilyPlanner()
-  const [memberId, setMemberId] = useState('')
+  const [memberIds, setMemberIds] = useState<Array<string>>([])
   const [entryDate, setEntryDate] = useState('')
   const [departureDate, setDepartureDate] = useState('')
   const [notes, setNotes] = useState('')
 
   useEffect(() => {
     if (trip) {
-      setMemberId(trip.memberId)
+      setMemberIds(trip.memberIds)
       setEntryDate(trip.entryDate)
       setDepartureDate(trip.departureDate)
       setNotes(trip.notes || '')
     } else {
-      setMemberId(state.members[0]?.id || '')
+      setMemberIds(state.members[0] ? [state.members[0].id] : [])
       setEntryDate(format(new Date(), 'yyyy-MM-dd'))
       setDepartureDate(format(new Date(), 'yyyy-MM-dd'))
       setNotes('')
@@ -52,10 +51,10 @@ export function TripDialog({ open, onClose, trip }: TripDialogProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!memberId || !entryDate || !departureDate) return
+    if (memberIds.length === 0 || !entryDate || !departureDate) return
 
     const tripData = {
-      memberId,
+      memberIds,
       entryDate,
       departureDate,
       notes: notes || undefined,
@@ -87,26 +86,42 @@ export function TripDialog({ open, onClose, trip }: TripDialogProps) {
 
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="member">Family Member</Label>
+              <Label htmlFor="member">Family Member(s)</Label>
               <Select
-                value={memberId}
-                onValueChange={(value) => value && setMemberId(value)}
+                multiple
+                value={memberIds}
+                onValueChange={(value) =>
+                  Array.isArray(value)
+                    ? setMemberIds(value)
+                    : setMemberIds([value])
+                }
               >
                 <SelectTrigger id="member">
                   <SelectValue>
-                    {(id: string) => {
-                      const member = state.members.find((m) => m.id === id)
-                      if (member) {
-                        return (
-                          <div className="flex items-center gap-2">
-                            <div
-                              className="h-3 w-3 rounded-full"
-                              style={{ backgroundColor: member.color }}
-                            />
-                            {member.name}
-                          </div>
-                        )
-                      } else return null
+                    {() => {
+                      if (memberIds.length === 0) return null
+                      return (
+                        <div className="flex items-center gap-2">
+                          {memberIds.map((id, idx) => {
+                            const member = state.members.find(
+                              (m) => m.id === id,
+                            )
+                            if (!member) return null
+                            return (
+                              <div key={id} className="flex items-center gap-2">
+                                <div
+                                  className="h-3 w-3 rounded-full"
+                                  style={{ backgroundColor: member.color }}
+                                />
+                                <span className="text-sm">
+                                  {member.name}
+                                  {idx < memberIds.length - 1 ? ', ' : ''}
+                                </span>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      )
                     }}
                   </SelectValue>
                 </SelectTrigger>
