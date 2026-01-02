@@ -4,7 +4,10 @@ import {
   IconPlane,
   IconUsers,
 } from '@tabler/icons-react'
-import { addYears, format, isBefore, parseISO } from 'date-fns'
+import { format, parseISO } from 'date-fns'
+import { useState } from 'react'
+import type { Trip } from '@/types/planner'
+import { TripDialog } from '@/components/calendar/TripDialog'
 import { useFamilyPlanner } from '@/context/FamilyPlannerContext'
 import { useEmptyDates, useMemberStats } from '@/hooks/usePlannerCalculations'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -27,16 +30,17 @@ export function DashboardView() {
     0,
   )
 
-  const handleDateClick = (dateString: string) => {
-    // TODO: change this to navigate to Calendar page, or trips setting page to update?
-    const clickedDate = parseISO(dateString)
-    const today = new Date()
+  const [isTripDialogOpen, setIsTripDialogOpen] = useState(false)
+  const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null)
 
-    // if (isBefore(clickedDate, today)) {
-    //   setRollingRefDate(format(addYears(clickedDate, 1), 'yyyy-MM-dd'))
-    // } else {
-    //   setRollingRefDate(dateString)
-    // }
+  const openTripDialog = (trip: Trip) => {
+    setSelectedTrip(trip)
+    setIsTripDialogOpen(true)
+  }
+
+  const closeTripDialog = () => {
+    setIsTripDialogOpen(false)
+    setSelectedTrip(null)
   }
 
   return (
@@ -164,24 +168,14 @@ export function DashboardView() {
                         >
                           <span
                             className="px-2 py-1 rounded bg-muted text-muted-foreground cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors"
-                            onClick={() =>
-                              handleDateClick(hightlightTrip.trip.entryDate)
-                            }
-                            title="Click to set as reference date (1 year later if in past)"
+                            onClick={() => openTripDialog(hightlightTrip.trip)}
+                            title="View trip details"
                           >
                             {format(
                               parseISO(hightlightTrip.trip.entryDate),
                               'MMM d, yyyy',
-                            )}
-                          </span>
-                          <span className="text-muted-foreground">→</span>
-                          <span
-                            className="px-2 py-1 rounded bg-muted text-muted-foreground cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors"
-                            onClick={() =>
-                              handleDateClick(hightlightTrip.trip.departureDate)
-                            }
-                            title="Click to set as reference date (1 year later if in past)"
-                          >
+                            )}{' '}
+                            <span className="text-muted-foreground">→</span>{' '}
                             {format(
                               parseISO(hightlightTrip.trip.departureDate),
                               'MMM d, yyyy',
@@ -239,6 +233,11 @@ export function DashboardView() {
           </div>
         </CardContent>
       </Card>
+      <TripDialog
+        open={isTripDialogOpen}
+        onClose={closeTripDialog}
+        trip={selectedTrip}
+      />
     </div>
   )
 }
