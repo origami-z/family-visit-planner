@@ -56,6 +56,8 @@ export interface MemberStats {
   name: string
   color: string
   currentStatus: 'present' | 'away'
+  /** The trip that is currently active (overlaps today), if any */
+  currentTrip?: Trip
   /** Trips within 1yr in the past and in the future, with over limit indication */
   highlightTrips: Array<HighlightTrip>
   nextTrip?: Trip

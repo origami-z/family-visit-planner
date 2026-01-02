@@ -253,6 +253,7 @@ export function useMemberStats(
         name: member.name,
         color: member.color,
         currentStatus: currentTrip ? 'present' : 'away',
+        currentTrip,
         nextTrip: futureTrips[0],
         activeWarnings,
         highlightTrips,

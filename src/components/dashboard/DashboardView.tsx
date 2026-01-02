@@ -139,10 +139,25 @@ export function DashboardView() {
                       <div>
                         <p className="font-medium">{member.name}</p>
                         <p className="text-sm text-muted-foreground">
-                          {member.currentStatus === 'present'
-                            ? 'Currently present'
-                            : 'Currently away'}
-                          {member.nextTrip && (
+                          {member.currentStatus === 'present' ? (
+                            <>
+                              Currently present
+                              {member.currentTrip && (
+                                <span>
+                                  , leaving:{' '}
+                                  {format(
+                                    parseISO(member.currentTrip.departureDate),
+                                    'MMM d',
+                                  )}
+                                </span>
+                              )}
+                            </>
+                          ) : (
+                            'Currently away'
+                          )}
+
+                          {/* Show next trip only when not currently present or when there is no currentTrip */}
+                          {!member.currentTrip && member.nextTrip && (
                             <span>
                               , next:{' '}
                               {format(
