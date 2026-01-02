@@ -6,7 +6,6 @@ import {
   format,
   isAfter,
   isBefore,
-  isValid,
   isWithinInterval,
   parseISO,
   subYears,
@@ -54,8 +53,26 @@ export function useEmptyDates(
   members: Array<FamilyMember>,
 ) {
   return useMemo(() => {
-    if (trips.length === 0 || members.length === 0) return []
+    if (members.length === 0) return []
 
+    // If there are no trips, return the empty period covering the next year.
+    if (trips.length === 0) {
+      const today = new Date()
+      const todayStart = new Date(
+        today.getFullYear(),
+        today.getMonth(),
+        today.getDate(),
+      )
+      const oneYearFromToday = addYears(todayStart, 1)
+
+      return [
+        {
+          startDate: format(todayStart, 'yyyy-MM-dd'),
+          endDate: format(oneYearFromToday, 'yyyy-MM-dd'),
+          duration: differenceInDays(oneYearFromToday, todayStart) + 1,
+        },
+      ]
+    }
     const allDates = trips
       .flatMap((trip) => [
         parseISO(trip.entryDate),
@@ -67,9 +84,25 @@ export function useEmptyDates(
 
     const emptyPeriods: Array<EmptyPeriod> = []
     const minDate = allDates[0]
-    const maxDate = allDates[allDates.length - 1]
+    const maxDateOriginal = allDates[allDates.length - 1]
 
-    let currentDate = minDate
+    // Only consider empty periods that include today or are in the future.
+    const today = new Date()
+    const todayStart = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate(),
+    )
+
+    // Ensure we consider empty periods up to at least one year from today.
+    const oneYearFromToday = addYears(todayStart, 1)
+    const maxDate = isAfter(maxDateOriginal, oneYearFromToday)
+      ? maxDateOriginal
+      : oneYearFromToday
+
+    const startDate = isBefore(minDate, todayStart) ? todayStart : minDate
+
+    let currentDate = startDate
 
     while (
       isBefore(currentDate, maxDate) ||
@@ -149,8 +182,6 @@ export function useMemberStats(
       const futureTrips = memberTripsSorted.filter((trip) =>
         isAfter(parseISO(trip.entryDate), today),
       )
-
-      const oneYearAgo = subYears(today, 1)
 
       const highlightTrips: Array<HighlightTrip> = []
 
