@@ -41,7 +41,7 @@ export function TripDialog({ open, onClose, trip }: TripDialogProps) {
       setDepartureDate(trip.departureDate)
       setNotes(trip.notes || '')
     } else {
-      setMemberIds(state.members[0] ? [state.members[0].id] : [])
+      setMemberIds([])
       setEntryDate(format(new Date(), 'yyyy-MM-dd'))
       setDepartureDate(format(new Date(), 'yyyy-MM-dd'))
       setNotes('')
@@ -99,7 +99,12 @@ export function TripDialog({ open, onClose, trip }: TripDialogProps) {
                 <SelectTrigger id="member">
                   <SelectValue>
                     {() => {
-                      if (memberIds.length === 0) return null
+                      if (memberIds.length === 0)
+                        return (
+                          <span className="text-sm text-muted-foreground">
+                            Select family member(s)
+                          </span>
+                        )
                       return (
                         <div className="flex items-center gap-2">
                           {memberIds.map((id, idx) => {
