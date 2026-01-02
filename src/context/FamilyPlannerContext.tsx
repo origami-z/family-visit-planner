@@ -78,7 +78,8 @@ export function FamilyPlannerProvider({ children }: { children: ReactNode }) {
 
     if (stored) {
       try {
-        return migrateData(JSON.parse(stored))
+        // wrap `migrateData()` if need to change data model
+        return JSON.parse(stored)
       } catch {
         return defaultState
       }
@@ -163,6 +164,12 @@ export function FamilyPlannerProvider({ children }: { children: ReactNode }) {
   }
 
   const exportData = () => state
+
+  useEffect(() => {
+    console.log('Context state changed:', state)
+  }, [state])
+
+  console.log('Context state:', state)
 
   return (
     <FamilyPlannerContext.Provider

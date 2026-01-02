@@ -1,17 +1,9 @@
-import { createHashHistory, createRouter } from '@tanstack/react-router'
+// This project no longer uses @tanstack/react-router.
+// The router and route generation code have been removed in favor of a
+// simple client-only `App` component. File kept as a stub for now.
 
-// Import the generated route tree
-import { routeTree } from './routeTree.gen'
-
-// Create a new router instance
-export const getRouter = () => {
-  const history = createHashHistory()
-  const router = createRouter({
-    routeTree,
-    history,
-    scrollRestoration: true,
-    defaultPreloadStaleTime: 0,
-  })
-
-  return router
+export function getRouter() {
+  throw new Error(
+    'getRouter was removed; import and render `App` from `src/App.tsx` instead.',
+  )
 }
