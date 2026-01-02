@@ -8,12 +8,6 @@ import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 
 function Dialog({ ...props }: DialogPrimitive.Root.Props) {
-  // Debug: log open state changes to help diagnose hangs reported when dialogs are open
-  React.useEffect(() => {
-     
-    console.log('[Dialog] opened:', props.open)
-  }, [props.open])
-
   return <DialogPrimitive.Root data-slot="dialog" {...props} />
 }
 
@@ -33,22 +27,6 @@ function DialogOverlay({
   className,
   ...props
 }: DialogPrimitive.Backdrop.Props) {
-  // Debug: log overlay mount/unmount and pointer events
-  React.useEffect(() => {
-     
-    console.log('[DialogOverlay] mounted')
-    return () => {
-       
-      console.log('[DialogOverlay] unmounted')
-    }
-  }, [])
-
-  const handlePointerDown = (e: React.PointerEvent) => {
-     
-    console.log('[DialogOverlay] pointerdown', e.pointerType)
-    if (props.onPointerDown) props.onPointerDown(e as any)
-  }
-
   return (
     <DialogPrimitive.Backdrop
       data-slot="dialog-overlay"
@@ -56,7 +34,6 @@ function DialogOverlay({
         'data-open:animate-in data-closed:animate-out data-closed:fade-out-0 data-open:fade-in-0 bg-black/10 duration-100 supports-backdrop-filter:backdrop-blur-xs fixed inset-0 isolate z-50',
         className,
       )}
-      onPointerDown={handlePointerDown}
       {...props}
     />
   )
@@ -70,21 +47,6 @@ function DialogContent({
 }: DialogPrimitive.Popup.Props & {
   showCloseButton?: boolean
 }) {
-  React.useEffect(() => {
-     
-    console.log('[DialogContent] mounted')
-    return () => {
-       
-      console.log('[DialogContent] unmounted')
-    }
-  }, [])
-
-  const handleOpenChange = (open?: boolean) => {
-     
-    console.log('[DialogContent] onOpenChange', open)
-    if (props.onOpenChange) props.onOpenChange(open as any)
-  }
-
   return (
     <DialogPortal>
       <DialogOverlay />
@@ -94,7 +56,6 @@ function DialogContent({
           'bg-background data-open:animate-in data-closed:animate-out data-closed:fade-out-0 data-open:fade-in-0 data-closed:zoom-out-95 data-open:zoom-in-95 ring-foreground/10 grid max-w-[calc(100%-2rem)] gap-4 rounded-xl p-4 text-sm ring-1 duration-100 sm:max-w-sm fixed top-1/2 left-1/2 z-50 w-full -translate-x-1/2 -translate-y-1/2 outline-none',
           className,
         )}
-        onOpenChange={handleOpenChange}
         {...props}
       >
         {children}

@@ -19,7 +19,7 @@ export default function App() {
       try {
         const decoded = JSON.parse(decodeURI(dataParam))
         localStorage.setItem('family-planner-data', JSON.stringify(decoded))
-        window.location.href = '/'
+        window.location.href = process.env.VITE_BASE_PATH || '/'
       } catch (error) {
         console.error('Error loading shared data:', error)
       }
