@@ -1,5 +1,10 @@
 # TanStack Start + shadcn/ui
 
+This project has been converted to a client-only SPA (no server-side rendering).
+
+- The TanStack React Start SSR/plugin has been removed.
+- The app uses hash-based routing (URLs look like `/#/...`) so it works on static hosts without server rewrites.
+
 This is a template for a new TanStack Start project with React, TypeScript, and shadcn/ui.
 
 ## Deployment (GitHub Pages) ⚙️
