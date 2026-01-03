@@ -13,6 +13,11 @@ import { useEmptyDates, useMemberStats } from '@/hooks/usePlannerCalculations'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 
 export function DashboardView() {
   const { state } = useFamilyPlanner()
@@ -173,9 +178,28 @@ export function DashboardView() {
 
                   {member.highlightTrips.length > 0 && (
                     <div className="ml-6 space-y-2">
-                      <p className="text-xs font-medium text-muted-foreground">
-                        Trips highlight:
-                      </p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-xs font-medium text-muted-foreground">
+                          Trips highlight:
+                        </p>
+                        {member.activeWarnings.length > 0 && (
+                          <Tooltip>
+                            <TooltipTrigger>
+                              <Badge className="bg-warning text-warning-foreground cursor-help">
+                                {member.activeWarnings.length} Warning
+                                {member.activeWarnings.length > 1 ? 's' : ''}
+                              </Badge>
+                            </TooltipTrigger>
+                            <TooltipContent side="right">
+                              <div className="space-y-1">
+                                {member.activeWarnings.map((warning, idx) => (
+                                  <div key={idx}>• {warning}</div>
+                                ))}
+                              </div>
+                            </TooltipContent>
+                          </Tooltip>
+                        )}
+                      </div>
                       {member.highlightTrips.map((hightlightTrip) => (
                         <div
                           key={hightlightTrip.trip.id}
@@ -218,13 +242,6 @@ export function DashboardView() {
                             {hightlightTrip.isOverLimit && (
                               <Badge variant="destructive">Over Limit</Badge>
                             )}
-                            {member.activeWarnings.length > 0 &&
-                              !hightlightTrip.isOverLimit && (
-                                <Badge className="bg-warning text-warning-foreground">
-                                  {member.activeWarnings.length} Warning
-                                  {member.activeWarnings.length > 1 ? 's' : ''}
-                                </Badge>
-                              )}
                           </div>
                         </div>
                       ))}

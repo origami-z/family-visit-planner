@@ -238,15 +238,40 @@ export function useMemberStats(
       }
 
       const activeWarnings: Array<string> = []
-      // member.warnings
-      //   .filter((w) => w.enabled)
-      //   .forEach((warning) => {
-      //     if (warning.type === 'stay-limit' && warning.criteria.limit) {
-      //       if (daysInYear >= warning.criteria.limit) {
-      //         activeWarnings.push(warning.criteria.message)
-      //       }
-      //     }
-      //   })
+
+      // Check flight-days warnings against all trips
+      member.warnings
+        .filter((w) => w.enabled && w.type === 'flight-days')
+        .forEach((warning) => {
+          if (warning.criteria.days && warning.criteria.days.length > 0) {
+            // Check if any trip violates the flight days restriction
+            const hasViolation = memberTripsSorted.some((trip) => {
+              const entryDate = parseISO(trip.entryDate)
+              const dayOfWeek = entryDate.getDay()
+              return !warning.criteria.days!.includes(dayOfWeek)
+            })
+
+            if (hasViolation) {
+              activeWarnings.push(warning.criteria.message)
+            }
+          }
+        })
+
+      // Check stay-limit warnings
+      member.warnings
+        .filter((w) => w.enabled && w.type === 'stay-limit')
+        .forEach((warning) => {
+          if (warning.criteria.limit) {
+            // Check if any highlighted trip exceeds the limit
+            const hasViolation = highlightTrips.some(
+              (ht) => ht.daysInYear > warning.criteria.limit!,
+            )
+
+            if (hasViolation) {
+              activeWarnings.push(warning.criteria.message)
+            }
+          }
+        })
 
       return {
         memberId: member.id,
