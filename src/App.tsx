@@ -1,17 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 
 import { FamilyPlannerProvider } from '@/context/FamilyPlannerContext'
-import { DashboardLayout } from '@/components/layout/DashboardLayout'
-import { DashboardView } from '@/components/dashboard/DashboardView'
-import { MembersView } from '@/components/members/MembersView'
-import { CalendarView } from '@/components/calendar/CalendarView'
-import { SettingsView } from '@/components/settings/SettingsView'
+import { AppRouter } from '@/router'
 
 import './styles.css'
 
 export default function App() {
-  const [activeSection, setActiveSection] = useState('dashboard')
-
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search)
     const dataParam = urlParams.get('data')
@@ -28,15 +22,7 @@ export default function App() {
 
   return (
     <FamilyPlannerProvider>
-      <DashboardLayout
-        activeSection={activeSection}
-        onSectionChange={setActiveSection}
-      >
-        {activeSection === 'dashboard' && <DashboardView />}
-        {activeSection === 'members' && <MembersView />}
-        {activeSection === 'calendar' && <CalendarView />}
-        {activeSection === 'settings' && <SettingsView />}
-      </DashboardLayout>
+      <AppRouter />
     </FamilyPlannerProvider>
   )
 }

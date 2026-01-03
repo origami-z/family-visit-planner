@@ -4,6 +4,7 @@ import {
   IconSettings,
   IconUsers,
 } from '@tabler/icons-react'
+import { useLocation, useNavigate } from '@tanstack/react-router'
 import type { ReactNode } from 'react'
 import {
   Sidebar,
@@ -17,20 +18,32 @@ import {
 
 interface DashboardLayoutProps {
   children: ReactNode
-  activeSection: string
-  onSectionChange: (section: string) => void
 }
 
-export function DashboardLayout({
-  children,
-  activeSection,
-  onSectionChange,
-}: DashboardLayoutProps) {
+export function DashboardLayout({ children }: DashboardLayoutProps) {
+  const location = useLocation()
+  const navigate = useNavigate()
+  const pathname = location.pathname
+
+  // Derive active section from pathname
+  const activeSection =
+    pathname === '/' ? 'dashboard' : pathname.replace(/^\//, '')
+
   const menuItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: IconHome },
-    { id: 'members', label: 'Members', icon: IconUsers },
-    { id: 'calendar', label: 'Calendar', icon: IconCalendar },
-    { id: 'settings', label: 'Settings', icon: IconSettings },
+    { id: 'dashboard', label: 'Dashboard', icon: IconHome, href: '/' },
+    { id: 'members', label: 'Members', icon: IconUsers, href: '/members' },
+    {
+      id: 'calendar',
+      label: 'Calendar',
+      icon: IconCalendar,
+      href: '/calendar',
+    },
+    {
+      id: 'settings',
+      label: 'Settings',
+      icon: IconSettings,
+      href: '/settings',
+    },
   ]
 
   return (
@@ -50,7 +63,7 @@ export function DashboardLayout({
                   <SidebarMenuItem key={item.id}>
                     <SidebarMenuButton
                       isActive={activeSection === item.id}
-                      onClick={() => onSectionChange(item.id)}
+                      onClick={() => navigate({ to: item.href })}
                     >
                       <Icon className="h-4 w-4" />
                       <span>{item.label}</span>
