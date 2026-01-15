@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 
 import { FamilyPlannerProvider } from '@/context/FamilyPlannerContext'
+import { ThemeProvider } from '@/context/ThemeContext'
 import { AppRouter } from '@/router'
 
 import './styles.css'
@@ -21,8 +22,10 @@ export default function App() {
   }, [])
 
   return (
-    <FamilyPlannerProvider>
-      <AppRouter />
-    </FamilyPlannerProvider>
+    <ThemeProvider>
+      <FamilyPlannerProvider>
+        <AppRouter />
+      </FamilyPlannerProvider>
+    </ThemeProvider>
   )
 }

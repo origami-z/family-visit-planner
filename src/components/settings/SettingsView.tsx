@@ -1,5 +1,6 @@
 import { IconDownload, IconShare, IconUpload } from '@tabler/icons-react'
 import { useState } from 'react'
+import { ThemeToggle } from './ThemeToggle'
 import { useFamilyPlanner } from '@/context/FamilyPlannerContext'
 import {
   Card,
@@ -118,6 +119,16 @@ export function SettingsView() {
       <div className="flex items-center justify-between">
         <h2 className="text-3xl font-bold text-foreground">Settings</h2>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Appearance</CardTitle>
+          <CardDescription>Customize how the application looks</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ThemeToggle />
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
