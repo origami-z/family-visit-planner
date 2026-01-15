@@ -21,6 +21,11 @@ import { useFamilyPlanner } from '@/context/FamilyPlannerContext'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 
 export function CalendarView() {
   const { state } = useFamilyPlanner()
@@ -136,19 +141,49 @@ export function CalendarView() {
                               (m) => m.id === mid,
                             )
                             if (!member) return null
+                            const tripMembers = trip.memberIds
+                              .map((id) =>
+                                state.members.find((m) => m.id === id),
+                              )
+                              .filter(Boolean)
                             return (
-                              <div
-                                key={`${trip.id}-${mid}`}
-                                className="text-xs p-1 rounded cursor-pointer hover:opacity-80"
-                                style={{
-                                  backgroundColor: member.color,
-                                  color: 'white',
-                                }}
-                                onClick={() => handleEditTrip(trip)}
-                                title={`${member.name}\n${trip.notes || ''}`}
-                              >
-                                {member.name}
-                              </div>
+                              <Tooltip key={`${trip.id}-${mid}`}>
+                                <TooltipTrigger
+                                  className="text-xs p-1 rounded cursor-pointer hover:opacity-80 w-full text-left"
+                                  style={{
+                                    backgroundColor: member.color,
+                                    color: 'white',
+                                  }}
+                                  onClick={() => handleEditTrip(trip)}
+                                >
+                                  {member.name}
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <div className="space-y-1">
+                                    <div className="font-medium">
+                                      {format(
+                                        parseISO(trip.entryDate),
+                                        'MMM d, yyyy',
+                                      )}{' '}
+                                      -{' '}
+                                      {format(
+                                        parseISO(trip.departureDate),
+                                        'MMM d, yyyy',
+                                      )}
+                                    </div>
+                                    <div>
+                                      {tripMembers
+                                        .map((m) => m?.name)
+                                        .join(', ')}
+                                    </div>
+                                    {trip.notes && (
+                                      <div className="text-muted-foreground">
+                                        {trip.notes}
+                                      </div>
+                                    )}
+                                  </div>
+                                </TooltipContent>
+                              </Tooltip>
                             )
                           }),
                         )}
