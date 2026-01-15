@@ -43,6 +43,7 @@ function storeState(state: PlannerState) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
 }
 
+// @ts-ignore - uncomment to enable data migration
 function migrateData(oldData: any): PlannerState {
   let migratedData = false
 
