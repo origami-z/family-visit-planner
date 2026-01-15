@@ -9,6 +9,7 @@ import {
   eachDayOfInterval,
   endOfMonth,
   format,
+  isSameDay,
   isSameMonth,
   isWithinInterval,
   parseISO,
@@ -104,94 +105,271 @@ export function CalendarView() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-7 gap-2">
-                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(
-                  (day) => (
-                    <div
-                      key={day}
-                      className="text-center font-medium text-sm text-muted-foreground p-2"
-                    >
-                      {day}
-                    </div>
+              {(() => {
+                // Build calendar grid with empty cells for padding
+                const calendarDays: Array<Date | null> = [
+                  ...Array.from({ length: monthStart.getDay() }).map(
+                    () => null,
                   ),
-                )}
+                  ...daysInMonth,
+                ]
+                // Pad end to complete the last week
+                while (calendarDays.length % 7 !== 0) {
+                  calendarDays.push(null)
+                }
 
-                {Array.from({ length: monthStart.getDay() }).map((_, i) => (
-                  <div key={`empty-${i}`} className="p-2" />
-                ))}
+                // Group into weeks
+                const weeks: Array<Array<Date | null>> = []
+                for (let i = 0; i < calendarDays.length; i += 7) {
+                  weeks.push(calendarDays.slice(i, i + 7))
+                }
 
-                {daysInMonth.map((day) => {
-                  const trips = getTripsForDay(day)
+                // Get trips that appear in this month
+                const monthTrips = state.trips.filter((trip) => {
+                  const tripStart = parseISO(trip.entryDate)
+                  const tripEnd = parseISO(trip.departureDate)
                   return (
-                    <div
-                      key={day.toISOString()}
-                      className={`min-h-24 p-2 border rounded-md ${
-                        isSameMonth(day, currentDate)
-                          ? 'bg-card'
-                          : 'bg-muted/50'
-                      }`}
-                    >
-                      <div className="text-sm font-medium mb-1">
-                        {format(day, 'd')}
-                      </div>
-                      <div className="space-y-1">
-                        {trips.flatMap((trip) =>
-                          trip.memberIds.map((mid) => {
-                            const member = state.members.find(
-                              (m) => m.id === mid,
-                            )
-                            if (!member) return null
-                            const tripMembers = trip.memberIds
-                              .map((id) =>
-                                state.members.find((m) => m.id === id),
-                              )
-                              .filter(Boolean)
-                            return (
-                              <Tooltip key={`${trip.id}-${mid}`}>
-                                <TooltipTrigger
-                                  className="text-xs p-1 rounded cursor-pointer hover:opacity-80 w-full text-left"
-                                  style={{
-                                    backgroundColor: member.color,
-                                    color: 'white',
-                                  }}
-                                  onClick={() => handleEditTrip(trip)}
-                                >
-                                  {member.name}
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <div className="space-y-1">
-                                    <div className="font-medium">
-                                      {format(
-                                        parseISO(trip.entryDate),
-                                        'MMM d, yyyy',
-                                      )}{' '}
-                                      -{' '}
-                                      {format(
-                                        parseISO(trip.departureDate),
-                                        'MMM d, yyyy',
-                                      )}
-                                    </div>
-                                    <div>
-                                      {tripMembers
-                                        .map((m) => m?.name)
-                                        .join(', ')}
-                                    </div>
-                                    {trip.notes && (
-                                      <div className="text-muted-foreground">
-                                        {trip.notes}
-                                      </div>
-                                    )}
-                                  </div>
-                                </TooltipContent>
-                              </Tooltip>
-                            )
-                          }),
-                        )}
-                      </div>
-                    </div>
+                    isWithinInterval(monthStart, {
+                      start: tripStart,
+                      end: tripEnd,
+                    }) ||
+                    isWithinInterval(monthEnd, {
+                      start: tripStart,
+                      end: tripEnd,
+                    }) ||
+                    isWithinInterval(tripStart, {
+                      start: monthStart,
+                      end: monthEnd,
+                    }) ||
+                    isWithinInterval(tripEnd, {
+                      start: monthStart,
+                      end: monthEnd,
+                    })
                   )
-                })}
-              </div>
+                })
+
+                // For each trip, expand to show each member separately
+                const tripMemberPairs = monthTrips
+                  .flatMap((trip) =>
+                    trip.memberIds.map((memberId) => ({
+                      trip,
+                      memberId,
+                      member: state.members.find((m) => m.id === memberId),
+                    })),
+                  )
+                  .filter((pair) => pair.member !== undefined)
+
+                return (
+                  <div className="space-y-0">
+                    {/* Header row */}
+                    <div className="grid grid-cols-7 gap-0">
+                      {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(
+                        (day) => (
+                          <div
+                            key={day}
+                            className="text-center font-medium text-sm text-muted-foreground p-2 border-b"
+                          >
+                            {day}
+                          </div>
+                        ),
+                      )}
+                    </div>
+
+                    {/* Week rows */}
+                    {weeks.map((week, weekIdx) => {
+                      // Find trip segments for this week
+                      const weekStart = week.find((d) => d !== null)
+                      const weekEnd = [...week]
+                        .reverse()
+                        .find((d) => d !== null)
+
+                      if (!weekStart || !weekEnd) {
+                        return (
+                          <div key={weekIdx} className="grid grid-cols-7 gap-0">
+                            {week.map((_, dayIdx) => (
+                              <div
+                                key={dayIdx}
+                                className="min-h-24 p-2 border-b border-r last:border-r-0"
+                              />
+                            ))}
+                          </div>
+                        )
+                      }
+
+                      // Calculate trip segments for this week
+                      type TripSegment = {
+                        trip: Trip
+                        memberId: string
+                        member: (typeof state.members)[0]
+                        startCol: number
+                        endCol: number
+                        isStart: boolean
+                        isEnd: boolean
+                      }
+
+                      const segments: Array<TripSegment> = []
+
+                      for (const {
+                        trip,
+                        memberId,
+                        member,
+                      } of tripMemberPairs) {
+                        if (!member) continue
+                        const tripStart = parseISO(trip.entryDate)
+                        const tripEnd = parseISO(trip.departureDate)
+
+                        // Find which days of this week the trip covers
+                        let startCol = -1
+                        let endCol = -1
+
+                        for (let col = 0; col < 7; col++) {
+                          const day = week[col]
+                          if (
+                            day &&
+                            isWithinInterval(day, {
+                              start: tripStart,
+                              end: tripEnd,
+                            })
+                          ) {
+                            if (startCol === -1) startCol = col
+                            endCol = col
+                          }
+                        }
+
+                        if (startCol !== -1) {
+                          const segmentStartDay = week[startCol]
+                          const segmentEndDay = week[endCol]
+                          segments.push({
+                            trip,
+                            memberId,
+                            member,
+                            startCol,
+                            endCol,
+                            isStart: segmentStartDay
+                              ? isSameDay(segmentStartDay, tripStart)
+                              : false,
+                            isEnd: segmentEndDay
+                              ? isSameDay(segmentEndDay, tripEnd)
+                              : false,
+                          })
+                        }
+                      }
+
+                      // Group segments by their position to stack them
+                      const segmentsByMember = new Map<
+                        string,
+                        Array<TripSegment>
+                      >()
+                      for (const seg of segments) {
+                        const key = `${seg.trip.id}-${seg.memberId}`
+                        if (!segmentsByMember.has(key)) {
+                          segmentsByMember.set(key, [])
+                        }
+                        segmentsByMember.get(key)!.push(seg)
+                      }
+
+                      const uniqueSegments = Array.from(
+                        segmentsByMember.values(),
+                      ).map((segs) => segs[0])
+
+                      return (
+                        <div key={weekIdx} className="relative">
+                          {/* Day cells */}
+                          <div className="grid grid-cols-7 gap-0">
+                            {week.map((day, dayIdx) => (
+                              <div
+                                key={dayIdx}
+                                className={`min-h-24 p-2 border-b border-r last:border-r-0 ${
+                                  day && isSameMonth(day, currentDate)
+                                    ? 'bg-card'
+                                    : 'bg-muted/50'
+                                }`}
+                              >
+                                {day && (
+                                  <div className="text-sm font-medium">
+                                    {format(day, 'd')}
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+
+                          {/* Trip bars overlaid on the week */}
+                          <div className="absolute inset-0 pointer-events-none pt-8 px-1">
+                            <div className="relative">
+                              {uniqueSegments.map((seg, segIdx) => {
+                                const tripMembers = seg.trip.memberIds
+                                  .map((id) =>
+                                    state.members.find((m) => m.id === id),
+                                  )
+                                  .filter(Boolean)
+
+                                // Calculate position and width
+                                const leftPercent = (seg.startCol / 7) * 100
+                                const widthPercent =
+                                  ((seg.endCol - seg.startCol + 1) / 7) * 100
+
+                                return (
+                                  <Tooltip
+                                    key={`${seg.trip.id}-${seg.memberId}-${weekIdx}`}
+                                  >
+                                    <TooltipTrigger
+                                      className="absolute pointer-events-auto cursor-pointer hover:opacity-80 text-xs text-white px-2 py-0.5 truncate"
+                                      style={{
+                                        left: `${leftPercent}%`,
+                                        width: `${widthPercent}%`,
+                                        top: `${segIdx * 22}px`,
+                                        backgroundColor: seg.member.color,
+                                        borderRadius:
+                                          seg.isStart && seg.isEnd
+                                            ? '4px'
+                                            : seg.isStart
+                                              ? '4px 0 0 4px'
+                                              : seg.isEnd
+                                                ? '0 4px 4px 0'
+                                                : '0',
+                                      }}
+                                      onClick={() => handleEditTrip(seg.trip)}
+                                      aria-label={`${seg.member.name}: ${format(parseISO(seg.trip.entryDate), 'MMM d')} - ${format(parseISO(seg.trip.departureDate), 'MMM d')}`}
+                                    >
+                                      {seg.member.name}
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <div className="space-y-1">
+                                        <div className="font-medium">
+                                          {format(
+                                            parseISO(seg.trip.entryDate),
+                                            'MMM d, yyyy',
+                                          )}{' '}
+                                          -{' '}
+                                          {format(
+                                            parseISO(seg.trip.departureDate),
+                                            'MMM d, yyyy',
+                                          )}
+                                        </div>
+                                        <div>
+                                          {tripMembers
+                                            .map((m) => m?.name)
+                                            .join(', ')}
+                                        </div>
+                                        {seg.trip.notes && (
+                                          <div className="text-muted-foreground">
+                                            {seg.trip.notes}
+                                          </div>
+                                        )}
+                                      </div>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                )
+                              })}
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )
+              })()}
             </CardContent>
           </Card>
         </TabsContent>

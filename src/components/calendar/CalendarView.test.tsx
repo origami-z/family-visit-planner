@@ -305,4 +305,178 @@ describe('CalendarView', () => {
       expect(day25WithTooltip.length).toBeLessThan(day25Elements.length)
     })
   })
+
+  describe('Monthly View - Continuous Events', () => {
+    it('renders a single-week trip with full rounding', async () => {
+      const member = { id: 'm1', name: 'Alice', color: '#ff0000', warnings: [] }
+      const trip = {
+        id: 't1',
+        memberIds: ['m1'],
+        entryDate: '2026-01-12', // Monday
+        departureDate: '2026-01-14', // Wednesday
+      }
+
+      const state = {
+        members: [member],
+        trips: [trip],
+        globalSettings: {
+          warnings: { enabled: true, rules: [] },
+          yearLimit: 180,
+        },
+      }
+
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+
+      render(
+        <FamilyPlannerProvider>
+          <CalendarView />
+        </FamilyPlannerProvider>,
+      )
+
+      // Find the trip bar by Alice's name
+      const aliceBars = screen.getAllByText('Alice')
+      expect(aliceBars.length).toBe(1) // Should only be one segment in one week
+
+      const bar = aliceBars[0]
+      // borderRadius: 4px
+      expect(bar.style.borderRadius).toBe('4px')
+      // width: (3/7) * 100 = 42.857...%
+      expect(bar.style.width).toBe(`${(3 / 7) * 100}%`)
+    })
+
+    it('renders a two-week trip with partial rounding on segments', async () => {
+      const member = { id: 'm1', name: 'Bob', color: '#00ff00', warnings: [] }
+      const trip = {
+        id: 't1',
+        memberIds: ['m1'],
+        entryDate: '2026-01-10', // Saturday (First week)
+        departureDate: '2026-01-13', // Tuesday (Second week)
+      }
+
+      const state = {
+        members: [member],
+        trips: [trip],
+        globalSettings: {
+          warnings: { enabled: true, rules: [] },
+          yearLimit: 180,
+        },
+      }
+
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+
+      render(
+        <FamilyPlannerProvider>
+          <CalendarView />
+        </FamilyPlannerProvider>,
+      )
+
+      const bobBars = screen.getAllByText('Bob')
+      expect(bobBars.length).toBe(2) // Two segments across two weeks
+
+      // First segment (Saturday 10th - Sunday 11th)
+      // Note: Logic in CalendarView.tsx uses startCol/endCol based on index within week array
+      // Sunday is index 0 in most calendars, but let's check what date-fns/CalendarView uses.
+      // Looking at CalendarView.tsx: each week is from startOfWeek(monthStart, { weekStartsOn: 0 })
+      // So Sunday is index 0.
+
+      // Saturday Jan 10 is index 6. Sunday Jan 11 is next week index 0.
+      // Wait, 2026-01-10 is Saturday.
+      // First week segments: index 6 (Sat).
+      // Second week segments: index 0 (Sun), 1 (Mon), 2 (Tue).
+
+      const firstWeekBar = bobBars.find((el) => el.style.left === `${(6 / 7) * 100}%`)
+      const secondWeekBar = bobBars.find((el) => el.style.left === '0%')
+
+      expect(firstWeekBar).toBeTruthy()
+      expect(secondWeekBar).toBeTruthy()
+
+      // First week bar starting on Saturday: borderRadius should be '4px 0 0 4px'
+      expect(firstWeekBar?.style.borderRadius).toBe('4px 0 0 4px')
+
+      // Second week bar ending on Tuesday: borderRadius should be '0 4px 4px 0'
+      expect(secondWeekBar?.style.borderRadius).toBe('0 4px 4px 0')
+    })
+
+    it('renders a three-week trip with no rounding on the middle segment', async () => {
+      const member = { id: 'm1', name: 'Charlie', color: '#0000ff', warnings: [] }
+      const trip = {
+        id: 't1',
+        memberIds: ['m1'],
+        entryDate: '2026-01-03', // Saturday
+        departureDate: '2026-01-20', // Tuesday (3 weeks later)
+      }
+
+      const state = {
+        members: [member],
+        trips: [trip],
+        globalSettings: {
+          warnings: { enabled: true, rules: [] },
+          yearLimit: 180,
+        },
+      }
+
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+
+      render(
+        <FamilyPlannerProvider>
+          <CalendarView />
+        </FamilyPlannerProvider>,
+      )
+
+      const charlieBars = screen.getAllByText('Charlie')
+      // Jan 3 (Sat) - Week 1
+      // Jan 4-10 - Week 2 (Full week)
+      // Jan 11-17 - Week 3 (Full week)
+      // Jan 18-20 - Week 4 (End)
+      // Wait, let's trace:
+      // Week 1: Jan 3 (Saturday, index 6)
+      // Week 2: Jan 4 (Sun, index 0) - Jan 10 (Sat, index 6) -> FULL WEEK
+      // Week 3: Jan 11 (Sun, index 0) - Jan 17 (Sat, index 6) -> FULL WEEK
+      // Week 4: Jan 18 (Sun, index 0) - Jan 20 (Tue, index 2)
+
+      expect(charlieBars.length).toBe(4)
+
+      // Middle segments (Week 2 and 3) should have borderRadius '0'
+      const middleWeek2 = charlieBars.find((el) => el.style.width === '100%')
+      expect(middleWeek2?.style.borderRadius).toBe('0')
+    })
+
+    it('stacks multiple member bars vertically', async () => {
+      const member1 = { id: 'm1', name: 'Alice', color: '#ff0000', warnings: [] }
+      const member2 = { id: 'm2', name: 'Bob', color: '#00ff00', warnings: [] }
+      const trip = {
+        id: 't1',
+        memberIds: ['m1', 'm2'],
+        entryDate: '2026-01-12',
+        departureDate: '2026-01-14',
+      }
+
+      const state = {
+        members: [member1, member2],
+        trips: [trip],
+        globalSettings: {
+          warnings: { enabled: true, rules: [] },
+          yearLimit: 180,
+        },
+      }
+
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+
+      render(
+        <FamilyPlannerProvider>
+          <CalendarView />
+        </FamilyPlannerProvider>,
+      )
+
+      const aliceBar = screen.getByText('Alice')
+      const bobBar = screen.getByText('Bob')
+
+      // Check top position
+      // The logic uses segIdx * 22
+      const aliceTop = parseInt(aliceBar.style.top)
+      const bobTop = parseInt(bobBar.style.top)
+
+      expect(Math.abs(aliceTop - bobTop)).toBe(22)
+    })
+  })
 })
