@@ -263,11 +263,19 @@ export function CalendarView() {
                           )
                           .filter(Boolean)
 
-                        return (
-                          <div
-                            key={day.toISOString()}
-                            className="aspect-square flex items-center justify-center text-xs rounded relative overflow-hidden"
-                          >
+                        const tripMemberNames = trips
+                          .flatMap((t) =>
+                            t.memberIds
+                              .map(
+                                (id) =>
+                                  state.members.find((m) => m.id === id)?.name,
+                              )
+                              .filter(Boolean),
+                          )
+                          .join(', ')
+
+                        const dayContent = (
+                          <>
                             {colors.length > 0 && (
                               <div className="absolute inset-0 flex">
                                 {colors.map((color, idx) => (
@@ -284,7 +292,65 @@ export function CalendarView() {
                             >
                               {format(day, 'd')}
                             </span>
-                          </div>
+                          </>
+                        )
+
+                        if (trips.length === 0) {
+                          return (
+                            <div
+                              key={day.toISOString()}
+                              className="aspect-square flex items-center justify-center text-xs rounded relative overflow-hidden"
+                            >
+                              {dayContent}
+                            </div>
+                          )
+                        }
+
+                        return (
+                          <Tooltip key={day.toISOString()}>
+                            <TooltipTrigger
+                              aria-label={`${format(day, 'MMMM d, yyyy')}: ${tripMemberNames}`}
+                              className="aspect-square flex items-center justify-center text-xs rounded relative overflow-hidden"
+                            >
+                              {dayContent}
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <div className="space-y-2">
+                                {trips.map((trip) => {
+                                  const tripMembers = trip.memberIds
+                                    .map((id) =>
+                                      state.members.find((m) => m.id === id),
+                                    )
+                                    .filter(Boolean)
+                                  return (
+                                    <div key={trip.id} className="space-y-1">
+                                      <div className="font-medium">
+                                        {format(
+                                          parseISO(trip.entryDate),
+                                          'MMM d, yyyy',
+                                        )}{' '}
+                                        -{' '}
+                                        {format(
+                                          parseISO(trip.departureDate),
+                                          'MMM d, yyyy',
+                                        )}
+                                      </div>
+                                      <div>
+                                        {tripMembers
+                                          .map((m) => m?.name)
+                                          .join(', ')}
+                                      </div>
+                                      {trip.notes && (
+                                        <div className="text-muted-foreground">
+                                          {trip.notes}
+                                        </div>
+                                      )}
+                                    </div>
+                                  )
+                                })}
+                              </div>
+                            </TooltipContent>
+                          </Tooltip>
                         )
                       })}
                     </div>
