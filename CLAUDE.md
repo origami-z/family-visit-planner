@@ -6,3 +6,7 @@
 
 - Add unit tests after adding every feature.
 - Stage changes and summarize change as git message when finish each feature.
+
+# Version Control
+
+- Append a paragraph to git commit message for each feature developed, summarizing the prompt Claude received and the plan executed.
