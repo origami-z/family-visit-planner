@@ -384,7 +384,9 @@ describe('CalendarView', () => {
       // First week segments: index 6 (Sat).
       // Second week segments: index 0 (Sun), 1 (Mon), 2 (Tue).
 
-      const firstWeekBar = bobBars.find((el) => el.style.left === `${(6 / 7) * 100}%`)
+      const firstWeekBar = bobBars.find(
+        (el) => el.style.left === `${(6 / 7) * 100}%`,
+      )
       const secondWeekBar = bobBars.find((el) => el.style.left === '0%')
 
       expect(firstWeekBar).toBeTruthy()
@@ -398,7 +400,12 @@ describe('CalendarView', () => {
     })
 
     it('renders a three-week trip with no rounding on the middle segment', async () => {
-      const member = { id: 'm1', name: 'Charlie', color: '#0000ff', warnings: [] }
+      const member = {
+        id: 'm1',
+        name: 'Charlie',
+        color: '#0000ff',
+        warnings: [],
+      }
       const trip = {
         id: 't1',
         memberIds: ['m1'],
@@ -442,7 +449,12 @@ describe('CalendarView', () => {
     })
 
     it('stacks multiple member bars vertically', async () => {
-      const member1 = { id: 'm1', name: 'Alice', color: '#ff0000', warnings: [] }
+      const member1 = {
+        id: 'm1',
+        name: 'Alice',
+        color: '#ff0000',
+        warnings: [],
+      }
       const member2 = { id: 'm2', name: 'Bob', color: '#00ff00', warnings: [] }
       const trip = {
         id: 't1',
