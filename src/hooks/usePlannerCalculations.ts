@@ -157,6 +157,35 @@ function isWithinOneYar(start: Date, end: Date, refDay: Date): boolean {
   )
 }
 
+// Sums the days a member was present, across all their trips, that fall
+// within the (inclusive) window [windowStart, windowEnd].
+function sumDaysInWindow(
+  trips: Array<Trip>,
+  windowStart: Date,
+  windowEnd: Date,
+): number {
+  let total = 0
+
+  trips.forEach((trip) => {
+    const tripStart = parseISO(trip.entryDate)
+    const tripEnd = parseISO(trip.departureDate)
+
+    const overlapStart = isBefore(tripStart, windowStart)
+      ? windowStart
+      : tripStart
+    const overlapEnd = isAfter(tripEnd, windowEnd) ? windowEnd : tripEnd
+
+    if (
+      isBefore(overlapStart, overlapEnd) ||
+      overlapStart.getTime() === overlapEnd.getTime()
+    ) {
+      total += differenceInDays(overlapEnd, overlapStart) + 1
+    }
+  })
+
+  return total
+}
+
 export function useMemberStats(
   members: Array<FamilyMember>,
   trips: Array<Trip>,
@@ -185,9 +214,7 @@ export function useMemberStats(
 
       const highlightTrips: Array<HighlightTrip> = []
 
-      for (let i = 0; i < memberTripsSorted.length; i++) {
-        const trip = memberTripsSorted[i]
-
+      for (const trip of memberTripsSorted) {
         const start = parseISO(trip.entryDate)
         const end = parseISO(trip.departureDate)
 
@@ -195,39 +222,30 @@ export function useMemberStats(
           continue
         }
 
-        let daysInYear = 0
+        // A trip can push the rolling-year total over the limit either by
+        // starting a busy year (this trip + later trips within the next
+        // 365 days) or by finishing one (earlier trips + this trip within
+        // the previous 365 days). Check both 1-year windows anchored on
+        // this trip and report whichever one is worse, so every trip shows
+        // the true rolling-year exposure it is part of, not just the one
+        // that happens to start on its own entry date.
+        const forwardWindowEnd = addYears(start, 1)
+        const forwardDays = sumDaysInWindow(
+          memberTripsSorted,
+          start,
+          forwardWindowEnd,
+        )
 
-        const refDate = addYears(start, 1)
+        const backwardWindowStart = subYears(end, 1)
+        const backwardDays = sumDaysInWindow(
+          memberTripsSorted,
+          backwardWindowStart,
+          end,
+        )
 
-        for (
-          let testIndex = i;
-          testIndex < memberTripsSorted.length;
-          testIndex++
-        ) {
-          const testTrip = memberTripsSorted[testIndex]
-
-          const testTripStart = parseISO(testTrip.entryDate)
-          const testTripEnd = parseISO(testTrip.departureDate)
-
-          if (isAfter(testTripStart, refDate)) {
-            // more than one year later, break early
-            break
-          }
-
-          const overlapStart = isBefore(testTripStart, refDate)
-            ? testTripStart
-            : refDate
-          const overlapEnd = isAfter(testTripEnd, refDate)
-            ? refDate
-            : testTripEnd
-
-          if (
-            isBefore(overlapStart, overlapEnd) ||
-            overlapStart.getTime() === overlapEnd.getTime()
-          ) {
-            daysInYear += differenceInDays(overlapEnd, overlapStart) + 1
-          }
-        }
+        const useForwardWindow = forwardDays >= backwardDays
+        const daysInYear = useForwardWindow ? forwardDays : backwardDays
+        const refDate = useForwardWindow ? forwardWindowEnd : end
 
         highlightTrips.push({
           trip,
